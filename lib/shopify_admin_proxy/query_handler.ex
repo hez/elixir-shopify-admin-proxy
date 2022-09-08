@@ -15,10 +15,10 @@ defmodule ShopifyAdminProxy.QueryHandler do
   @spec fetch_query(map()) :: {:ok, String.t()} | :error
   def fetch_query(parsed_body), do: Map.fetch(parsed_body, "query")
 
-  def queries do
-    base_directory()
+  def queries! do
+    base_directory!()
     |> File.ls!()
-    |> Enum.map(&Path.join([base_directory(), &1]))
+    |> Enum.map(&Path.join([base_directory!(), &1]))
     |> Enum.map(&File.read!/1)
     |> Enum.map(&normalize/1)
   end
@@ -34,11 +34,6 @@ defmodule ShopifyAdminProxy.QueryHandler do
   def normalize(body),
     do: ~r/[\s+\n\,]/ |> Regex.replace(body, "") |> String.replace("__typename", "")
 
-  def base_directory do
-    Application.get_env(
-      :shopify_admin_proxy,
-      :base_gql_directory,
-      Path.join(["priv", "proxy_queries"])
-    )
-  end
+  def base_directory!,
+    do: Application.get_env(:shopify_admin_proxy, :base_gpl_directory, "priv/proxy_queries")
 end

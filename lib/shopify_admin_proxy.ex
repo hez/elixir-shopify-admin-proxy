@@ -15,10 +15,9 @@ defmodule ShopifyAdminProxy do
 
   defdelegate configured_version(), to: ShopifyAPI.GraphQL
 
-  def init(opts) do
-    opts = ReverseProxyPlug.init(opts)
-    Keyword.put(opts, :queries, QueryHandler.queries())
-  end
+  @queries QueryHandler.queries!()
+
+  def init(opts), do: ReverseProxyPlug.init(opts)
 
   def call(%{request_path: request_path} = conn, opts) do
     case Keyword.get(opts, :mount_path) == request_path do
@@ -43,9 +42,8 @@ defmodule ShopifyAdminProxy do
       |> Keyword.put(:scheme, "https")
 
     body = ReverseProxyPlug.read_body(conn)
-    queries = Keyword.get(opts, :queries)
 
-    case is_permitted_request?(body, queries) do
+    case is_permitted_request?(body) do
       true ->
         Logger.debug("requesting shopify")
 
@@ -64,10 +62,12 @@ defmodule ShopifyAdminProxy do
     end
   end
 
-  defp is_permitted_request?(body, queries) do
+  def queries, do: @queries
+
+  defp is_permitted_request?(body) do
     normalized = QueryHandler.fetch_normalized(body)
 
-    case Enum.any?(queries, &(&1 == normalized)) do
+    case Enum.any?(queries(), &(&1 == normalized)) do
       true ->
         true
 
