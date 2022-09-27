@@ -1,7 +1,7 @@
 defmodule ShopifyAdminProxy.MixProject do
   use Mix.Project
 
-  @version "0.1.1"
+  @version "0.1.2"
 
   def project do
     [
@@ -31,8 +31,8 @@ defmodule ShopifyAdminProxy.MixProject do
       {:credo, "~> 1.6.4", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.2.0", only: [:dev, :test], runtime: false},
       # Prod
-      {:jason, "~> 1.2"},
-      {:shopify_api, github: "orbit-apps/elixir-shopifyapi", tag: "v0.13.5"},
+      {:jason, "~> 1.4"},
+      {:shopify_api, github: "orbit-apps/elixir-shopifyapi", tag: "v0.13.6"},
       {:reverse_proxy_plug, "~> 2.1"}
     ]
   end
