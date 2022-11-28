@@ -29,27 +29,26 @@ defmodule ShopifyAdminProxy do
   def forward_conn(%{halted: true} = conn, _opts), do: conn
 
   def forward_conn(%{assigns: %{shop: shop, auth_token: auth_token}} = conn, opts) do
-    # cleanup the path info so ReverseProxyPlug doesn't try and use any of it
-    conn = %{conn | path_info: []}
-
-    opts =
-      opts
-      |> Keyword.put(:upstream, "https://#{shop.domain}")
-      |> Keyword.put(:request_path, "/admin/api/#{configured_version()}/graphql.json")
-      |> Keyword.put(:authority, shop.domain)
-      |> Keyword.put(:host, shop.domain)
-      |> Keyword.put(:port, 443)
-      |> Keyword.put(:scheme, "https")
-
     body = ReverseProxyPlug.read_body(conn)
 
     case is_permitted_request?(body) do
       true ->
         Logger.debug("requesting shopify")
 
-        conn
+        opts =
+          opts
+          |> Keyword.put(:upstream, "https://#{shop.domain}")
+          |> Keyword.put(:request_path, "/admin/api/#{configured_version()}/graphql.json")
+          |> Keyword.put(:authority, shop.domain)
+          |> Keyword.put(:host, shop.domain)
+          |> Keyword.put(:port, 443)
+          |> Keyword.put(:scheme, "https")
+
+        # Cleanup the path info so ReverseProxyPlug doesn't try and use any of it and
+        # set our request headers, Shopify can redirect to shop.myshopify.com/admin/login
+        # if specific headers are passed through.
+        %{conn | path_info: [], req_headers: req_headers(auth_token)}
         |> assign(:raw_body, body)
-        |> put_req_header("X-Shopify-Access-Token", auth_token.token)
         |> ReverseProxyPlug.call(opts)
         |> halt()
 
@@ -60,6 +59,13 @@ defmodule ShopifyAdminProxy do
         |> resp(403, "Forbidden.")
         |> halt()
     end
+  end
+
+  def req_headers(auth_token) do
+    [
+      {"Content-Type", "application/json"},
+      {"X-Shopify-Access-Token", auth_token.token}
+    ]
   end
 
   def queries, do: @queries
