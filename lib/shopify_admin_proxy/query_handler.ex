@@ -15,13 +15,10 @@ defmodule ShopifyAdminProxy.QueryHandler do
   @spec fetch_query(map()) :: {:ok, String.t()} | :error
   def fetch_query(parsed_body), do: Map.fetch(parsed_body, "query")
 
-  def queries! do
-    base_directory!()
-    |> File.ls!()
-    |> Enum.map(&Path.join([base_directory!(), &1]))
-    |> Enum.map(&File.read!/1)
-    |> Enum.map(&normalize/1)
-  end
+  def query_files!,
+    do: base_directory!() |> File.ls!() |> Enum.map(&Path.join([base_directory!(), &1]))
+
+  def queries!, do: query_files!() |> Enum.map(&File.read!/1) |> Enum.map(&normalize/1)
 
   @doc """
   Normalizes a query body for matching and validation purposes.
