@@ -17,6 +17,11 @@ defmodule ShopifyAdminProxy do
 
   @queries QueryHandler.queries!()
 
+  # Add external link to all the query files, telling mix to recompile if they change
+  for query_file <- QueryHandler.query_files!() do
+    @external_resource query_file
+  end
+
   def init(opts), do: ReverseProxyPlug.init(opts)
 
   def call(%{request_path: request_path} = conn, opts) do
@@ -69,6 +74,9 @@ defmodule ShopifyAdminProxy do
   end
 
   def queries, do: @queries
+
+  # Check MD5 of queries vs cached to tell mix whether we should recompile this module
+  def __mix_recompile__?, do: :erlang.md5(QueryHandler.queries!()) != :erlang.md5(@queries)
 
   defp is_permitted_request?(body) do
     normalized = QueryHandler.fetch_normalized(body)
