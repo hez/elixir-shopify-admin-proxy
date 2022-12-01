@@ -24,6 +24,13 @@ config :shopify_admin_proxy,
   base_gpl_directory: Path.expand("../admin_ui/src/graphql/shopify", __DIR__)
 ```
 
+The proxy defaults to caching all graphql query files in the module, to disable this for development add the following to `config/dev.exs`
+
+```elixir
+# Disable query compile time caching for dev
+config :shopify_admin_proxy, use_cached_queries: false
+```
+
 Since the proxy forwards the entire body of the request you will have to mount the proxy in your endpoint before the `Plug.Parsers` gets called. You can ignore `upstream: ...` here, it is required by the proxy library used but gets replaced at time of calling.
 
 Example:

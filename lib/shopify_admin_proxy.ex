@@ -15,11 +15,13 @@ defmodule ShopifyAdminProxy do
 
   defdelegate configured_version(), to: ShopifyAPI.GraphQL
 
-  @queries QueryHandler.queries!()
+  @use_cached_queries Application.compile_env(:shopify_admin_proxy, :use_cached_queries, true)
 
-  # Add external link to all the query files, telling mix to recompile if they change
-  for query_file <- QueryHandler.query_files!() do
-    @external_resource query_file
+  if @use_cached_queries do
+    @queries QueryHandler.queries!()
+    def queries, do: @queries
+  else
+    def queries, do: QueryHandler.queries!()
   end
 
   def init(opts), do: ReverseProxyPlug.init(opts)
@@ -72,11 +74,6 @@ defmodule ShopifyAdminProxy do
       {"X-Shopify-Access-Token", auth_token.token}
     ]
   end
-
-  def queries, do: @queries
-
-  # Check MD5 of queries vs cached to tell mix whether we should recompile this module
-  def __mix_recompile__?, do: :erlang.md5(QueryHandler.queries!()) != :erlang.md5(@queries)
 
   defp is_permitted_request?(body) do
     normalized = QueryHandler.fetch_normalized(body)
