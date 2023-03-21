@@ -28,7 +28,7 @@ defmodule ShopifyAdminProxy.MixProject do
   defp deps do
     [
       # dev and test
-      {:credo, "~> 1.6.4", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.7.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.2.0", only: [:dev, :test], runtime: false},
       # Prod
       {:jason, "~> 1.4"},
