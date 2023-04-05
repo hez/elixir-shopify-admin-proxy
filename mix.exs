@@ -33,7 +33,7 @@ defmodule ShopifyAdminProxy.MixProject do
       # Prod
       {:jason, "~> 1.4"},
       {:shopify_api, github: "orbit-apps/elixir-shopifyapi", tag: "v0.13.7"},
-      {:reverse_proxy_plug, "~> 2.1"}
+      {:reverse_proxy_plug, github: "hez/reverse_proxy_plug", branch: "httpoison2"}
     ]
   end
 end
