@@ -29,7 +29,7 @@ defmodule ShopifyAdminProxy.MixProject do
     [
       # dev and test
       {:credo, "~> 1.7.0", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.2.0", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
       # Prod
       {:jason, "~> 1.4"},
       {:shopify_api, github: "orbit-apps/elixir-shopifyapi", tag: "v0.14.3"},
