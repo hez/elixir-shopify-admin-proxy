@@ -29,6 +29,8 @@ The proxy defaults to caching all graphql query files in the module, to disable 
 ```elixir
 # Disable query compile time caching for dev
 config :shopify_admin_proxy, use_cached_queries: false
+# If you would like to use User Tokens then set this to true
+config :shopify_admin_proxy, use_online_tokens: false
 ```
 
 Since the proxy forwards the entire body of the request you will have to mount the proxy in your endpoint before the `Plug.Parsers` gets called. You can ignore `upstream: ...` here, it is required by the proxy library used but gets replaced at time of calling.
