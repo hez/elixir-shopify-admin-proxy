@@ -60,7 +60,7 @@ defmodule ShopifyAdminProxy do
         |> halt()
 
       _ ->
-        Logger.warn("illegal request", myshopify_domain: shop.domain)
+        Logger.warning("illegal request", myshopify_domain: shop.domain)
 
         conn
         |> resp(403, "Forbidden.")
@@ -83,7 +83,7 @@ defmodule ShopifyAdminProxy do
         true
 
       false ->
-        Logger.warn("Failed to proxy query, not found in existing allowed list")
+        Logger.warning("Failed to proxy query, not found in existing allowed list")
         Logger.debug("Query attempted, #{inspect(normalized)}")
         false
     end
