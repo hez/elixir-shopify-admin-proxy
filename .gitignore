@@ -22,5 +22,8 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 shopify_admin_proxy-*.tar
 
+# plts for dialyzer
+/priv/plts/*.plt*
+
 # Temporary files, for example, from tests.
 /tmp/
