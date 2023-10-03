@@ -9,7 +9,7 @@ The proxy uses the [ShopifyAPI authentication plug](https://github.com/orbit-app
 ```elixir
 def deps do
   [
-    {:shopify_admin_proxy, github: "hez/elixir-shopify-admin-proxy", branch: "v0.2.2"}
+    {:shopify_admin_proxy, github: "hez/elixir-shopify-admin-proxy", branch: "v0.3.1"}
   ]
 end
 ```
