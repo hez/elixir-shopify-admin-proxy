@@ -7,7 +7,7 @@ defmodule ShopifyAdminProxy.MixProject do
     [
       app: :shopify_admin_proxy,
       version: @version,
-      elixir: "~> 1.13",
+      elixir: "~> 1.15",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: [
