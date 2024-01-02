@@ -46,7 +46,7 @@ defmodule ShopifyAdminProxy do
     body = ReverseProxyPlug.read_body(conn)
 
     with {:ok, auth_token} <- token_from_conn(conn),
-         true <- is_permitted_request?(body) do
+         true <- permitted_request?(body) do
       Logger.debug("requesting shopify")
 
       opts =
@@ -88,7 +88,7 @@ defmodule ShopifyAdminProxy do
   defp token_from_conn(%{assigns: %{auth_token: %{token: token}}}), do: {:ok, token}
   defp token_from_conn(_), do: {:error, :no_token_found}
 
-  defp is_permitted_request?(body) do
+  defp permitted_request?(body) do
     normalized = QueryHandler.fetch_normalized(body)
 
     case Enum.any?(queries(), &(&1 == normalized)) do
