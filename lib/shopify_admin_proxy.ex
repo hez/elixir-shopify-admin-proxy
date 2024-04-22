@@ -43,7 +43,7 @@ defmodule ShopifyAdminProxy do
   def forward_conn(%{halted: true} = conn, _opts), do: conn
 
   def forward_conn(%{assigns: %{shop: shop}} = conn, opts) do
-    body = ReverseProxyPlug.read_body(conn)
+    {body, conn} = ReverseProxyPlug.read_body(conn)
 
     with {:ok, auth_token} <- token_from_conn(conn),
          true <- permitted_request?(body) do
