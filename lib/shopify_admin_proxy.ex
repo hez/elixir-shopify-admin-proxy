@@ -8,7 +8,7 @@ defmodule ShopifyAdminProxy do
 
   The proxy is mounted at the :mount_path option
   """
-  import Plug.Conn, only: [assign: 3, halt: 1, resp: 3]
+  import Plug.Conn, only: [assign: 3, halt: 1, resp: 3, put_resp_content_type: 2]
   require Logger
 
   alias ShopifyAPI.Plugs.AuthShopSessionToken
@@ -18,6 +18,11 @@ defmodule ShopifyAdminProxy do
 
   @use_cached_queries Application.compile_env(:shopify_admin_proxy, :use_cached_queries, true)
   @use_online_tokens Application.compile_env(:shopify_admin_proxy, :use_online_tokens, false)
+  @allow_overridden_queries Application.compile_env(
+                              :shopify_admin_proxy,
+                              :allow_overridden_queries,
+                              false
+                            )
 
   if @use_cached_queries do
     @queries QueryHandler.queries!()
@@ -44,35 +49,48 @@ defmodule ShopifyAdminProxy do
 
   def forward_conn(%{assigns: %{shop: shop}} = conn, opts) do
     {body, conn} = ReverseProxyPlug.read_body(conn)
+    query_endpoint = get_query_endpoint(body)
+    overrides = Keyword.get(opts, :overridden_queries, %{})
 
-    with {:ok, auth_token} <- token_from_conn(conn),
-         true <- permitted_request?(body) do
-      Logger.debug("requesting shopify")
+    if not @allow_overridden_queries and not Map.has_key?(overrides, query_endpoint) do
+      with {:ok, auth_token} <- token_from_conn(conn),
+           true <- permitted_request?(body) do
+        Logger.debug("requesting shopify")
 
-      opts =
-        opts
-        |> Keyword.put(:upstream, "https://#{shop.domain}")
-        |> Keyword.put(:request_path, "/admin/api/#{configured_version()}/graphql.json")
-        |> Keyword.put(:authority, shop.domain)
-        |> Keyword.put(:host, shop.domain)
-        |> Keyword.put(:port, 443)
-        |> Keyword.put(:scheme, "https")
+        opts =
+          opts
+          |> Keyword.put(:upstream, "https://#{shop.domain}")
+          |> Keyword.put(:request_path, "/admin/api/#{configured_version()}/graphql.json")
+          |> Keyword.put(:authority, shop.domain)
+          |> Keyword.put(:host, shop.domain)
+          |> Keyword.put(:port, 443)
+          |> Keyword.put(:scheme, "https")
 
-      # Cleanup the path info so ReverseProxyPlug doesn't try and use any of it and
-      # set our request headers, Shopify can redirect to shop.myshopify.com/admin/login
-      # if specific headers are passed through.
-      %{conn | path_info: [], req_headers: req_headers(auth_token)}
-      |> assign(:raw_body, body)
-      |> ReverseProxyPlug.call(opts)
-      |> halt()
+        # Cleanup the path info so ReverseProxyPlug doesn't try and use any of it and
+        # set our request headers, Shopify can redirect to shop.myshopify.com/admin/login
+        # if specific headers are passed through.
+        %{conn | path_info: [], req_headers: req_headers(auth_token)}
+        |> assign(:raw_body, body)
+        |> ReverseProxyPlug.call(opts)
+        |> halt()
+      else
+        {:error, :no_token_found} ->
+          Logger.warning("No auth token found.")
+          conn |> resp(403, "Forbidden.") |> halt()
+
+        false ->
+          Logger.warning("illegal request", myshopify_domain: shop.domain)
+          conn |> resp(403, "Forbidden.") |> halt()
+      end
     else
-      {:error, :no_token_found} ->
-        Logger.warning("No auth token found.")
-        conn |> resp(403, "Forbidden.") |> halt()
+      Logger.warning("Using an overridden query response for #{query_endpoint}!")
+      {override_module, override_function, _} = Map.get(overrides, query_endpoint)
+      ret_body = apply(override_module, override_function, [])
 
-      false ->
-        Logger.warning("illegal request", myshopify_domain: shop.domain)
-        conn |> resp(403, "Forbidden.") |> halt()
+      conn
+      |> resp(200, ret_body)
+      |> put_resp_content_type("application/json; charset=utf-8")
+      |> halt()
     end
   end
 
@@ -100,5 +118,11 @@ defmodule ShopifyAdminProxy do
         Logger.debug("Query attempted, #{inspect(normalized)}")
         false
     end
+  end
+
+  defp get_query_endpoint(body) do
+    ~r/{\"operationName\":\"(?<query_endpoint>[^\"]+)\".*/
+    |> Regex.named_captures(body)
+    |> Map.get("query_endpoint")
   end
 end
