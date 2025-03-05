@@ -11,13 +11,11 @@ defmodule ShopifyAdminProxy do
   import Plug.Conn, only: [assign: 3, halt: 1, resp: 3]
   require Logger
 
-  alias ShopifyAPI.Plugs.AuthShopSessionToken
   alias ShopifyAdminProxy.QueryHandler
 
   defdelegate configured_version(), to: ShopifyAPI.GraphQL
 
   @use_cached_queries Application.compile_env(:shopify_admin_proxy, :use_cached_queries, true)
-  @use_online_tokens Application.compile_env(:shopify_admin_proxy, :use_online_tokens, false)
 
   if @use_cached_queries do
     @queries QueryHandler.queries!()
@@ -32,7 +30,7 @@ defmodule ShopifyAdminProxy do
     case Keyword.get(opts, :mount_path) == request_path do
       true ->
         conn
-        |> AuthShopSessionToken.call(use_online_tokens: @use_online_tokens)
+        |> ShopifyAPI.Plugs.AuthShopSessionToken.call()
         |> forward_conn(opts)
 
       false ->
