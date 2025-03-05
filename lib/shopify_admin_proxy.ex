@@ -30,7 +30,7 @@ defmodule ShopifyAdminProxy do
     case Keyword.get(opts, :mount_path) == request_path do
       true ->
         conn
-        |> ShopifyAPI.Plugs.AuthShopSessionToken.call()
+        |> ShopifyAPI.Plugs.AuthShopSessionToken.call([])
         |> forward_conn(opts)
 
       false ->
